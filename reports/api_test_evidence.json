@@ -1,0 +1,176 @@
+[
+    {
+        "test": "Health check",
+        "method": "GET",
+        "endpoint": "/health",
+        "payload": null,
+        "expected_status": 200,
+        "observed_status": 200,
+        "expected_behaviour": "Service reports healthy with model loaded",
+        "observed_result": {
+            "status": "ok",
+            "model_loaded": true,
+            "model_version": "1.0.0"
+        },
+        "status": "PASS"
+    },
+    {
+        "test": "Valid input",
+        "method": "POST",
+        "endpoint": "/predict",
+        "payload": {
+            "square_feet": 2200.0,
+            "bedrooms": 3,
+            "bathrooms": 2.5,
+            "location_score": 8.0,
+            "year_built": 2012,
+            "garage_spaces": 2
+        },
+        "expected_status": 200,
+        "observed_status": 200,
+        "expected_behaviour": "Prediction returned in expected schema",
+        "observed_result": {
+            "prediction": [
+                803727.32
+            ],
+            "units": "USD",
+            "status": "success",
+            "model_version": "1.0.0"
+        },
+        "status": "PASS"
+    },
+    {
+        "test": "Missing field",
+        "method": "POST",
+        "endpoint": "/predict",
+        "payload": {
+            "bedrooms": 3,
+            "bathrooms": 2.5,
+            "location_score": 8.0,
+            "year_built": 2012,
+            "garage_spaces": 2
+        },
+        "expected_status": 422,
+        "observed_status": 422,
+        "expected_behaviour": "Validation error (HTTP 422)",
+        "observed_result": {
+            "detail": [
+                {
+                    "type": "missing",
+                    "loc": [
+                        "body",
+                        "square_feet"
+                    ],
+                    "msg": "Field required",
+                    "input": {
+                        "bedrooms": 3,
+                        "bathrooms": 2.5,
+                        "location_score": 8.0,
+                        "year_built": 2012,
+                        "garage_spaces": 2
+                    }
+                }
+            ]
+        },
+        "status": "PASS"
+    },
+    {
+        "test": "Wrong type",
+        "method": "POST",
+        "endpoint": "/predict",
+        "payload": {
+            "square_feet": 2200.0,
+            "bedrooms": "three_bedrooms",
+            "bathrooms": 2.5,
+            "location_score": 8.0,
+            "year_built": 2012,
+            "garage_spaces": 2
+        },
+        "expected_status": 422,
+        "observed_status": 422,
+        "expected_behaviour": "Validation error (HTTP 422)",
+        "observed_result": {
+            "detail": [
+                {
+                    "type": "int_parsing",
+                    "loc": [
+                        "body",
+                        "bedrooms"
+                    ],
+                    "msg": "Input should be a valid integer, unable to parse string as an integer",
+                    "input": "three_bedrooms"
+                }
+            ]
+        },
+        "status": "PASS"
+    },
+    {
+        "test": "Invalid business value",
+        "method": "POST",
+        "endpoint": "/predict",
+        "payload": {
+            "square_feet": -150.0,
+            "bedrooms": 3,
+            "bathrooms": 2.5,
+            "location_score": 8.0,
+            "year_built": 2012,
+            "garage_spaces": 2
+        },
+        "expected_status": 422,
+        "observed_status": 422,
+        "expected_behaviour": "Controlled validation error if constraint exists",
+        "observed_result": {
+            "detail": [
+                {
+                    "type": "greater_than",
+                    "loc": [
+                        "body",
+                        "square_feet"
+                    ],
+                    "msg": "Input should be greater than 0",
+                    "input": -150.0,
+                    "ctx": {
+                        "gt": 0.0
+                    }
+                }
+            ]
+        },
+        "status": "PASS"
+    },
+    {
+        "test": "Batch prediction",
+        "method": "POST",
+        "endpoint": "/predict_batch",
+        "payload": [
+            {
+                "square_feet": 1200.0,
+                "bedrooms": 2,
+                "bathrooms": 1.0,
+                "location_score": 6.0,
+                "year_built": 1990,
+                "garage_spaces": 1
+            },
+            {
+                "square_feet": 3000.0,
+                "bedrooms": 4,
+                "bathrooms": 3.0,
+                "location_score": 9.0,
+                "year_built": 2021,
+                "garage_spaces": 3
+            }
+        ],
+        "expected_status": 200,
+        "observed_status": 200,
+        "expected_behaviour": "Scored predictions returned for all records",
+        "observed_result": {
+            "predictions": [
+                552757.98,
+                966775.57
+            ],
+            "count": 2,
+            "units": "USD",
+            "status": "success"
+        },
+        "status": "PASS"
+    }
+]
